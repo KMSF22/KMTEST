@@ -383,3 +383,9 @@ ul.plain li{ margin-bottom: 6px; max-width: 62ch; }
   .hero{ padding-top: 28px; }
   section.chapter{ padding-block: 36px; }
 }
+
+/* Opener vidéo : lecteur 16:9 en tête de page, avant le hero. */
+.opener{ background: var(--surface-2); border-bottom: 1px solid var(--line); padding: 24px 16px; }
+.opener-inner{ max-width: 960px; margin: 0 auto; }
+.opener-frame{ position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #000; box-shadow: 0 8px 30px rgba(36,28,48,.18); }
+.opener-frame iframe{ position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
