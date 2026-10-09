@@ -1,0 +1,633 @@
+<title>Slack & Claude, le guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : en-tête sticky avec navigation numérotée (le parcours est une vraie séquence), */
+/* puis cinq chapitres en colonne unique, largeur de lecture confortable, repères typographiques forts. */
+:root{
+  --bg: #F7F2EA;
+  --surface: #FFFFFF;
+  --surface-2: #EFE6D8;
+  --ink: #241C30;
+  --ink-soft: #5E5569;
+  --ink-faint: #8A8192;
+  --line: #E3D8C6;
+  --accent: #6A3FA0;
+  --accent-ink: #4A2A75;
+  --accent-soft: #EEE3F9;
+  --claude: #B2531F;
+  --claude-ink: #8A3F16;
+  --claude-soft: #FBE9DC;
+  --good: #19744A;
+  --good-soft: #E2F2E8;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Source Sans 3", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg: #18121F;
+    --surface: #211A2C;
+    --surface-2: #2A2236;
+    --ink: #F2ECF7;
+    --ink-soft: #C3B9D1;
+    --ink-faint: #8E8399;
+    --line: #3A2F49;
+    --accent: #B994EA;
+    --accent-ink: #D8BFF5;
+    --accent-soft: #332545;
+    --claude: #F0A370;
+    --claude-ink: #F6C19B;
+    --claude-soft: #3A2A20;
+    --good: #7BD9A6;
+    --good-soft: #1C3328;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg: #18121F;
+  --surface: #211A2C;
+  --surface-2: #2A2236;
+  --ink: #F2ECF7;
+  --ink-soft: #C3B9D1;
+  --ink-faint: #8E8399;
+  --line: #3A2F49;
+  --accent: #B994EA;
+  --accent-ink: #D8BFF5;
+  --accent-soft: #332545;
+  --claude: #F0A370;
+  --claude-ink: #F6C19B;
+  --claude-soft: #3A2A20;
+  --good: #7BD9A6;
+  --good-soft: #1C3328;
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  padding-inline: 20px;
+}
+h1,h2,h3{
+  font-family: var(--font-display);
+  color: var(--ink);
+  text-wrap: balance;
+  font-weight: 600;
+  margin: 0;
+}
+p{ margin: 0 0 1em; color: var(--ink); max-width: 64ch; }
+a{ color: var(--accent-ink); }
+code, kbd, .mono{ font-family: var(--font-mono); }
+
+/* ---------- Nav ---------- */
+.topbar{
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding-block: 10px;
+  margin-inline: -20px;
+  padding-inline: 20px;
+}
+.topbar-inner{
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.brandmark{
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.brandmark .dot{ color: var(--accent); }
+.navscroll{
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+}
+.navscroll::-webkit-scrollbar{ display:none; }
+.navscroll a{
+  flex: 0 0 auto;
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+.navscroll a:hover{ background: var(--surface-2); color: var(--ink); }
+
+/* ---------- Shell ---------- */
+.shell{ max-width: 760px; margin: 0 auto; }
+
+.hero{ padding-block: 40px 28px; }
+.eyebrow{
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  font-weight: 600;
+  display:flex; align-items:center; gap:8px;
+  margin-bottom: 14px;
+}
+.eyebrow::before{
+  content:"";
+  width: 18px; height: 1px;
+  background: var(--accent);
+}
+.hero h1{ font-size: clamp(2rem, 7vw, 2.75rem); line-height: 1.08; margin-bottom: 14px; }
+.hero .lede{ font-size: 1.08rem; color: var(--ink-soft); max-width: 58ch; }
+
+.toc{
+  display: grid;
+  gap: 2px;
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.toc a{
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  text-decoration: none;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+.toc a:hover .toc-label{ color: var(--accent-ink); }
+.toc-num{ font-family: var(--font-mono); color: var(--ink-faint); font-size: 0.82rem; flex: 0 0 auto; }
+.toc-label{ font-weight: 600; }
+.toc-sub{ color: var(--ink-faint); font-size: 0.85rem; margin-left: auto; text-align: right; display:none; }
+@media (min-width: 560px){ .toc-sub{ display:block; } }
+
+/* ---------- Sections ---------- */
+section.chapter{
+  padding-block: 48px;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: calc(60px + env(safe-area-inset-top, 0px));
+}
+.chapter-head{
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  margin-bottom: 22px;
+}
+.chapter-num{
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--accent-ink);
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+.chapter-head h2{ font-size: clamp(1.4rem, 5vw, 1.8rem); }
+
+.chapter.claude .chapter-num{ color: var(--claude-ink); }
+
+h3.sub{
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin-top: 30px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+h3.sub .tag{
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  margin-left: 8px;
+}
+
+/* ---------- Components ---------- */
+.kbd-row{ display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+kbd{
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  color: var(--ink);
+}
+
+table.keys{
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 18px;
+  font-size: 0.92rem;
+}
+table.keys th{
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  padding: 6px 10px 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+table.keys td{
+  padding: 9px 10px 9px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+table.keys td:first-child{ white-space: nowrap; }
+.wrap-table{ overflow-x: auto; }
+
+.callout{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 16px 0;
+}
+.callout p:last-child{ margin-bottom: 0; }
+.callout .callout-label{
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--good);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.grid-tips{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin: 16px 0 10px;
+}
+.tip{
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 0;
+}
+.tip h4{
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+.tip p{ font-size: 0.88rem; color: var(--ink-soft); margin: 0; }
+
+/* Mock Slack message bubbles, used for Claude Tag examples */
+.bubble{
+  display: flex;
+  gap: 12px;
+  margin: 14px 0;
+  min-width: 0;
+}
+.avatar{
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #fff;
+}
+.avatar.user{ background: var(--accent); }
+.avatar.claude{ background: var(--claude); }
+.bubble-body{ min-width: 0; flex: 1; }
+.bubble-meta{
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 0.82rem; margin-bottom: 3px;
+}
+.bubble-name{ font-weight: 700; }
+.bubble-time{ color: var(--ink-faint); font-size: 0.76rem; }
+.bubble-text{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0 10px 10px 10px;
+  padding: 10px 13px;
+  font-size: 0.92rem;
+  max-width: 54ch;
+  overflow-wrap: break-word;
+}
+.bubble-text code{
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+.mention{ color: var(--accent-ink); font-weight: 600; background: var(--accent-soft); padding: 0 3px; border-radius: 4px; }
+.mention.claude-mention{ color: var(--claude-ink); background: var(--claude-soft); }
+
+.dos-donts{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin: 18px 0;
+}
+.dos-donts .box{
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 0;
+  border: 1px solid var(--line);
+}
+.dos-donts .box.good{ background: var(--good-soft); }
+.dos-donts .box.bad{ background: var(--surface-2); }
+.dos-donts .box h4{
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+.dos-donts .box.good h4{ color: var(--good); }
+.dos-donts .box.bad h4{ color: var(--ink-faint); }
+.dos-donts .box ul{ margin: 0; padding-left: 18px; }
+.dos-donts .box li{ font-size: 0.88rem; margin-bottom: 6px; }
+.dos-donts .box li:last-child{ margin-bottom: 0; }
+
+.search-chip{
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin: 0 2px;
+}
+
+footer{
+  border-top: 1px solid var(--line);
+  padding-block: 28px 44px;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+}
+
+ul.plain{ padding-left: 20px; margin: 0 0 1em; }
+ul.plain li{ margin-bottom: 6px; max-width: 62ch; }
+
+@media (max-width: 480px){
+  .hero{ padding-top: 28px; }
+  section.chapter{ padding-block: 36px; }
+}
+</style>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brandmark">Slack<span class="dot">·</span>Claude</div>
+    <nav class="navscroll">
+      <a href="#bases">1. Bases</a>
+      <a href="#organiser">2. Organiser</a>
+      <a href="#fichiers">3. Fichiers</a>
+      <a href="#claude-tag">4. Claude Tag</a>
+      <a href="#astuces">5. Astuces</a>
+    </nav>
+  </div>
+</div>
+
+<div class="shell">
+
+  <section class="hero">
+    <div class="eyebrow">Guide pratique</div>
+    <h1>Travailler dans Slack, avec Claude à portée de mention</h1>
+    <p class="lede">Cinq chapitres, dans l'ordre où ils servent vraiment&nbsp;: les fondamentaux de Slack, l'organisation de l'espace de travail, les fichiers et intégrations, puis Claude Tag — l'assistant qu'on tague directement dans une conversation — et enfin les astuces qui font gagner du temps chaque jour.</p>
+
+    <nav class="toc">
+      <a href="#bases"><span class="toc-num">01</span><span class="toc-label">Les bases de Slack</span><span class="toc-sub">canaux, threads, mentions, recherche</span></a>
+      <a href="#organiser"><span class="toc-num">02</span><span class="toc-label">Organiser son travail</span><span class="toc-sub">canaux, pins, bookmarks, canvases</span></a>
+      <a href="#fichiers"><span class="toc-num">03</span><span class="toc-label">Fichiers &amp; intégrations</span><span class="toc-sub">partage, apps, workflows</span></a>
+      <a href="#claude-tag"><span class="toc-num">04</span><span class="toc-label">Claude dans Slack</span><span class="toc-sub">Claude Tag, code, PR, veille</span></a>
+      <a href="#astuces"><span class="toc-num">05</span><span class="toc-label">Astuces productivité</span><span class="toc-sub">recherche, statuts, notifications</span></a>
+    </nav>
+  </section>
+
+  <!-- 01 ------------------------------------------------------------ -->
+  <section class="chapter" id="bases">
+    <div class="chapter-head">
+      <span class="chapter-num">01</span>
+      <h2>Les bases de Slack</h2>
+    </div>
+    <p>Slack s'organise autour de trois unités simples&nbsp;: le <strong>canal</strong> (une conversation de groupe autour d'un sujet), le <strong>message direct</strong> (un échange privé) et le <strong>fil de discussion</strong> (une réponse rattachée à un message précis). Une fois ces trois réflexes acquis, le reste de l'outil suit naturellement.</p>
+
+    <h3 class="sub">Canaux</h3>
+    <p>Un canal public (<code>#design</code>, <code>#produit</code>) est visible et rejoignable par toute l'équipe&nbsp;; un canal privé exige une invitation. Avant de créer un nouveau canal, vérifiez qu'il n'existe pas déjà avec <kbd>Cmd</kbd> + <kbd>K</kbd> — la création de canaux redondants est la première cause de messages perdus dans une grande équipe.</p>
+
+    <h3 class="sub">Messages et formatage</h3>
+    <p>La mise en forme suit une syntaxe légère&nbsp;: <code>*gras*</code>, <code>_italique_</code>, <code>~barré~</code>, et un triple backtick pour un bloc de code. <kbd>Maj</kbd> + <kbd>Entrée</kbd> insère un retour à la ligne sans envoyer le message — indispensable pour rédiger un message de plusieurs lignes sans l'envoyer à moitié écrit.</p>
+
+    <h3 class="sub">Fils de discussion (threads)</h3>
+    <p>Répondre en fil plutôt que dans le canal garde la conversation principale lisible. La règle simple&nbsp;: si votre réponse ne concerne que l'auteur du message et quelques personnes, répondez en fil. Si elle apporte une information que tout le canal doit voir, cochez <em>« Envoyer aussi dans #canal »</em> au moment de répondre.</p>
+
+    <h3 class="sub">Mentions</h3>
+    <div class="wrap-table">
+    <table class="keys">
+      <tr><th>Mention</th><th>Effet</th></tr>
+      <tr><td><code>@prénom</code></td><td>Notifie une personne précise, même si elle a coupé les notifications du canal.</td></tr>
+      <tr><td><code>@here</code></td><td>Notifie les seuls membres du canal actuellement actifs.</td></tr>
+      <tr><td><code>@channel</code></td><td>Notifie tous les membres du canal, actifs ou non — à réserver aux messages réellement urgents.</td></tr>
+      <tr><td><code>@everyone</code></td><td>Notifie tout l'espace de travail depuis <code>#général</code> — usage très rare.</td></tr>
+    </table>
+    </div>
+
+    <h3 class="sub">Recherche</h3>
+    <p>La barre de recherche (<kbd>Cmd</kbd> + <kbd>F</kbd> dans un canal, ou <kbd>Cmd</kbd> + <kbd>K</kbd> pour la recherche globale) indexe messages, fichiers et noms de canaux. Le chapitre 5 détaille les modificateurs qui transforment cette recherche en véritable outil d'enquête.</p>
+
+    <h3 class="sub">Raccourcis clavier essentiels</h3>
+    <div class="wrap-table">
+    <table class="keys">
+      <tr><th>Raccourci</th><th>Action</th></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>K</kbd></td><td>Sauter vers un canal, une personne ou une app</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>G</kbd></td><td>Recherche globale dans tout l'espace de travail</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd></td><td>Ouvrir ses activités / mentions</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>.</kbd></td><td>Réduire ou agrandir la barre latérale</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Marquer le canal courant comme lu et revenir en arrière</td></tr>
+      <tr><td><kbd>↑</kbd></td><td>Modifier son dernier message envoyé</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <!-- 02 ------------------------------------------------------------ -->
+  <section class="chapter" id="organiser">
+    <div class="chapter-head">
+      <span class="chapter-num">02</span>
+      <h2>Organiser son travail</h2>
+    </div>
+    <p>Slack devient vite une pile de dizaines de canaux et de DM. Quelques réflexes suffisent à garder une barre latérale utilisable au lieu d'une liste illisible.</p>
+
+    <h3 class="sub">Canaux vs messages directs</h3>
+    <p>Un canal reste la bonne unité dès qu'un sujet concerne plus de deux personnes ou doit rester consultable par de futurs arrivants. Le message direct convient à l'échange ponctuel et privé — mais une décision prise en DM qui concerne l'équipe doit être recopiée dans le canal concerné&nbsp;: un DM n'est cherchable par personne d'autre que ses participants.</p>
+
+    <h3 class="sub">Favoris</h3>
+    <p>Cliquez sur l'étoile à côté du nom d'un canal ou d'une conversation pour l'épingler en haut de la barre latérale, dans la section <em>Favoris</em>. Réservez cette section aux 5 à 10 canaux que vous consultez vraiment chaque jour&nbsp;: au-delà, elle perd son intérêt de raccourci.</p>
+
+    <h3 class="sub">Messages épinglés (pins)</h3>
+    <p>Dans un canal actif, l'information importante défile vite. Épingler un message (menu <code>⋯</code> → <em>Épingler au canal</em>) le rend accessible depuis l'icône punaise de l'en-tête&nbsp;: parfait pour les règles du canal, un lien récurrent ou une décision de référence.</p>
+
+    <h3 class="sub">Signets (bookmarks)</h3>
+    <p>Les signets vivent dans la barre juste sous l'en-tête d'un canal&nbsp;: un lien vers un document, un tableau de bord ou une feuille de route, visible en permanence sans avoir à le rechercher dans l'historique. Ajoutez-en via l'icône <em>Ajouter un signet</em> en haut du canal.</p>
+
+    <h3 class="sub">Canvas</h3>
+    <p>Un canvas est un document collaboratif attaché à un canal ou une conversation&nbsp;: titres, listes, cases à cocher, images et liens, modifiable à plusieurs en temps réel. Il convient aux informations qui ont besoin de structure et de durer — une check-list d'onboarding, les notes d'un projet, un plan de lancement — là où un message se contente de s'ajouter au flux.</p>
+
+    <div class="grid-tips">
+      <div class="tip"><h4>Sections de la barre latérale</h4><p>Regroupez vos canaux par glisser-déposer dans des sections personnalisées (« Projet X », « Équipe », « Veille ») plutôt que de les laisser dans une seule liste triée par activité.</p></div>
+      <div class="tip"><h4>Masquer sans quitter</h4><p>Un canal peu actif mais à garder peut être masqué via <em>Options du canal → Masquer</em>, sans le quitter ni perdre son historique.</p></div>
+      <div class="tip"><h4>Marquer comme lu</h4><p><kbd>Esc</kbd> marque le canal courant comme lu d'un coup, utile pour repartir à zéro après une pause.</p></div>
+    </div>
+  </section>
+
+  <!-- 03 ------------------------------------------------------------ -->
+  <section class="chapter" id="fichiers">
+    <div class="chapter-head">
+      <span class="chapter-num">03</span>
+      <h2>Fichiers &amp; intégrations</h2>
+    </div>
+    <p>Slack n'est pas qu'un outil de messages&nbsp;: c'est aussi un point d'entrée vers les fichiers et les autres outils de l'équipe.</p>
+
+    <h3 class="sub">Partage de fichiers</h3>
+    <p>Glissez-déposez un fichier directement dans la zone de message, ou utilisez le trombone pour l'importer depuis votre ordinateur, Google Drive ou un autre service connecté. Les images, PDF et documents s'affichent en aperçu directement dans la conversation&nbsp;: pas besoin de les télécharger pour vérifier leur contenu. Un fichier déjà partagé peut être retrouvé via la recherche avec le modificateur <span class="search-chip">has:file</span>.</p>
+
+    <h3 class="sub">Applications</h3>
+    <p>Le répertoire d'applications (icône <em>+</em> dans la barre latérale, ou <kbd>Cmd</kbd>+<kbd>K</kbd> puis tapez le nom de l'app) connecte Slack à des outils comme Google Drive, GitHub, Jira, Figma ou un calendrier. Une fois une app installée dans un canal, elle peut y poster des notifications automatiques (une nouvelle pull request, un ticket créé) sans que personne n'ait à les relayer à la main.</p>
+
+    <h3 class="sub">Commandes slash</h3>
+    <p>Une commande tapée directement dans le champ de message, préfixée par <code>/</code>, déclenche une action immédiate&nbsp;: <code>/remind</code> programme un rappel, <code>/poll</code> lance un sondage, <code>/status</code> met à jour votre statut sans ouvrir de menu. Tapez <code>/</code> seul pour voir la liste des commandes disponibles dans votre espace de travail.</p>
+
+    <h3 class="sub">Workflow Builder</h3>
+    <p>Le créateur de workflows automatise une suite d'étapes répétitives sans écrire de code&nbsp;: un formulaire de demande de congés qui poste dans le bon canal, un message de bienvenue envoyé automatiquement à chaque nouvel arrivant, un rappel hebdomadaire de compte-rendu envoyé à toute une équipe. On le configure depuis le nom de l'espace de travail → <em>Outils</em> → <em>Workflow Builder</em>, en choisissant un déclencheur (un raccourci, un mot-clé, une programmation) puis une suite d'étapes.</p>
+  </section>
+
+  <!-- 04 — CLAUDE TAG ------------------------------------------------ -->
+  <section class="chapter claude" id="claude-tag">
+    <div class="chapter-head">
+      <span class="chapter-num">04</span>
+      <h2>Utiliser Claude dans Slack (Claude Tag)</h2>
+    </div>
+    <p>Claude Tag est la présence de Claude dans vos canaux et conversations&nbsp;: on le sollicite en le mentionnant, comme on mentionnerait un collègue, et il répond directement dans le fil. Pas d'onglet à ouvrir, pas de contexte à recopier&nbsp;: Claude lit la conversation où il est tagué.</p>
+
+    <h3 class="sub">Taguer @Claude et poser une question</h3>
+    <p>Dans n'importe quel canal où Claude Tag est installé, ou en DM avec lui, tapez <code>@Claude</code> suivi de votre question. Le plus efficace&nbsp;: poser une question dans un fil déjà riche en contexte — Claude peut lire les messages précédents du fil pour comprendre de quoi il est question, sans que vous ayez à tout réexpliquer.</p>
+
+    <div class="bubble">
+      <div class="avatar user">KM</div>
+      <div class="bubble-body">
+        <div class="bubble-meta"><span class="bubble-name">Karim</span><span class="bubble-time">11:42</span></div>
+        <div class="bubble-text"><span class="mention claude-mention">@Claude</span> peux-tu résumer les décisions prises dans ce fil et lister les actions restantes&nbsp;?</div>
+      </div>
+    </div>
+    <div class="bubble">
+      <div class="avatar claude">C</div>
+      <div class="bubble-body">
+        <div class="bubble-meta"><span class="bubble-name">Claude</span><span class="bubble-time">11:42</span></div>
+        <div class="bubble-text">Trois décisions&nbsp;: migration reportée à vendredi, budget validé par Sophie, ticket de suivi à créer pour l'équipe infra. Actions restantes&nbsp;: 1) créer le ticket, 2) prévenir l'équipe infra, 3) mettre à jour le canevas de lancement.</div>
+      </div>
+    </div>
+
+    <h3 class="sub">Générer du code ou une pull request</h3>
+    <p>Décrivez le résultat attendu plutôt que l'implémentation&nbsp;: le dépôt concerné, le comportement souhaité, et le format de sortie (un extrait de code à relire, ou une pull request ouverte directement sur GitHub). Plus la demande cite un fichier, une fonction ou un ticket précis, plus la réponse est exploitable sans aller-retour.</p>
+
+    <div class="bubble">
+      <div class="avatar user">KM</div>
+      <div class="bubble-body">
+        <div class="bubble-meta"><span class="bubble-name">Karim</span><span class="bubble-time">14:05</span></div>
+        <div class="bubble-text"><span class="mention claude-mention">@Claude</span> dans <code>acme/billing-service</code>, corrige le bug où <code>calculateInvoice()</code> arrondit mal les montants en centimes (voir le ticket BILL-482). Ouvre une pull request avec le correctif et un test qui couvre le cas.</div>
+      </div>
+    </div>
+
+    <h3 class="sub">Demander une veille sur un fil ou une pull request</h3>
+    <p>Claude peut aussi surveiller une discussion ou une pull request GitHub pour le compte de l'équipe&nbsp;: signaler une nouvelle review, relancer si une pull request reste sans réponse, ou résumer les évolutions d'un fil quand il devient trop long pour être relu en entier.</p>
+
+    <div class="bubble">
+      <div class="avatar user">KM</div>
+      <div class="bubble-body">
+        <div class="bubble-meta"><span class="bubble-name">Karim</span><span class="bubble-time">16:20</span></div>
+        <div class="bubble-text"><span class="mention claude-mention">@Claude</span> surveille la pull request #482 sur <code>acme/billing-service</code>&nbsp;: préviens-moi ici dès qu'une review ou un commentaire arrive.</div>
+      </div>
+    </div>
+
+    <h3 class="sub">Bien formuler sa demande</h3>
+    <div class="dos-donts">
+      <div class="box good">
+        <h4>À privilégier</h4>
+        <ul>
+          <li>Un objectif par message, formulé comme pour un collègue</li>
+          <li>Le contexte nécessaire&nbsp;: dépôt, canal, ticket, lien</li>
+          <li>Le format de réponse attendu (résumé, code, pull request, oui/non)</li>
+          <li>Une question posée dans le fil concerné, pas isolée</li>
+        </ul>
+      </div>
+      <div class="box bad">
+        <h4>À éviter</h4>
+        <ul>
+          <li>Plusieurs demandes différentes empilées dans un seul message</li>
+          <li>Une mention sans contexte dans un canal sans historique</li>
+          <li>Supposer que Claude connaît un dépôt ou un outil non précisé</li>
+          <li>Redemander la même chose dans un nouveau message au lieu de préciser dans le fil</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-label">À retenir</span>
+      <p>Claude Tag répond là où on le sollicite&nbsp;: canal d'équipe, DM ou fil. Le réflexe à prendre n'est pas « ouvrir un outil à part » mais « taguer @Claude juste où la question se pose », avec le minimum de contexte nécessaire pour qu'il n'ait pas à deviner.</p>
+    </div>
+  </section>
+
+  <!-- 05 ------------------------------------------------------------ -->
+  <section class="chapter" id="astuces">
+    <div class="chapter-head">
+      <span class="chapter-num">05</span>
+      <h2>Astuces productivité</h2>
+    </div>
+    <p>Trois leviers simples réduisent le bruit au quotidien&nbsp;: une recherche précise, un statut qui parle pour vous, et des notifications qui ne sonnent que pour ce qui compte vraiment.</p>
+
+    <h3 class="sub">Recherche avancée</h3>
+    <p>La recherche Slack accepte des modificateurs qui filtrent les résultats avant même de les afficher. Ils se combinent librement dans une même requête.</p>
+    <div class="wrap-table">
+    <table class="keys">
+      <tr><th>Modificateur</th><th>Filtre</th></tr>
+      <tr><td><span class="search-chip">from:@nom</span></td><td>Messages envoyés par une personne précise</td></tr>
+      <tr><td><span class="search-chip">in:#canal</span></td><td>Résultats limités à un canal ou une conversation</td></tr>
+      <tr><td><span class="search-chip">before:2026-01-01</span></td><td>Messages envoyés avant une date</td></tr>
+      <tr><td><span class="search-chip">after:2026-01-01</span></td><td>Messages envoyés après une date</td></tr>
+      <tr><td><span class="search-chip">has:link</span></td><td>Messages contenant un lien</td></tr>
+      <tr><td><span class="search-chip">has:pin</span></td><td>Messages épinglés dans un canal</td></tr>
+      <tr><td><span class="search-chip">is:thread</span></td><td>Résultats situés dans un fil de discussion</td></tr>
+    </table>
+    </div>
+    <p>Exemple combiné&nbsp;: <span class="search-chip">from:@sophie in:#produit after:2026-09-01</span> retrouve en une requête tout ce que Sophie a posté dans #produit depuis début septembre.</p>
+
+    <h3 class="sub">Statuts personnalisés</h3>
+    <p>Le statut (clic sur votre photo de profil → <em>Mettre à jour le statut</em>) combine un emoji, un court texte et une expiration automatique. Un statut utile se lit en un coup d'œil et s'efface tout seul&nbsp;: « 🎯 En rendez-vous client » qui expire dans 2&nbsp;heures évite d'avoir à y repenser en sortant de réunion.</p>
+
+    <h3 class="sub">Notifications</h3>
+    <div class="grid-tips">
+      <div class="tip"><h4>Ne pas déranger</h4><p>Programmez des horaires de silence automatiques (soir, week-end) dans les préférences de notifications, pour que Slack respecte vos heures sans y penser chaque jour.</p></div>
+      <div class="tip"><h4>Mots-clés surveillés</h4><p>Ajoutez des mots-clés personnels dans les préférences&nbsp;: Slack vous notifie dès qu'ils apparaissent, même dans un canal où vous êtes en mode silencieux.</p></div>
+      <div class="tip"><h4>Par canal</h4><p>Réglez la notification canal par canal (<em>Tout</em>, <em>Mentions uniquement</em>, <em>Rien</em>) depuis le menu <code>⋯</code> de son en-tête, plutôt qu'un seul réglage global pour tout l'espace de travail.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    Guide Slack &amp; Claude Tag — pensé pour une prise en main rapide, du premier message au premier workflow automatisé.
+  </footer>
+
+</div>
